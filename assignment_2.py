@@ -3,6 +3,44 @@
 import os,sys
 import argparse
 
+def firewall_setup():
+	os.system("ifconfig enp2s0 192.168.88.1 up")
+	os.system("echo \"1\" >/proc/sys/net/ipv4/ip_forward")
+	os.system("route add -net 192.168.0.0 netmask 255.255.255.0 gw 192.168.0.100")
+	os.system("route add -net 192.168.88.0/24 gw 192.168.88.1")
+
+def internet_host_setup():
+	os.system("ifconfig eno1 down")
+	os.system("ifconfig enp2s0 192.168.88.2 up")
+	os.system("route add default gw 192.168.88.1")
+
+def dns_allow():
+	print("Allow DNS")
+	os.system("iptables -A INPUT -p udp  --sport 1024:65535  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A OUTPUT -p udp  --sport 53  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A INPUT -p udp  --sport 53  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A OUTPUT -p udp  --sport 53  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+
+	os.system("iptables -A INPUT -p tcp  --sport 1024:65535  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A OUTPUT -p tcp  --sport 53  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	
+	os.system("iptables -A OUTPUT -p udp  --sport 1024:65535  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A INPUT -p udp  --sport 53  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A OUTPUT-p tcp  --sport 1024:65535  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A INPUT -p tcp  --sport 53  --dport 1024:65535 -m state --state NEW,ESTABLISHED -j ACCEPT")
+
+def dhcp_allow():
+	print("Allow DHCP")
+	os.system("iptables -A INPUT -m udp -p udp --sport 67:68 --dport 67:68 -m state --state NEW,ESTABLISHED -j ACCEPT")
+	os.system("iptables -A OUTPUT -m udp -p udp --sport 67:68 --dport 67:68 -m state --state NEW,ESTABLISHED -j ACCEPT")
+
+
+def drop_all():
+	print("Setting default policies to DROP")
+	os.system("iptables -P INPUT DROP")
+	os.system("iptables -P FORWARD DROP")
+	os.system("iptables -P OUTPUT DROP")
+
 
 
 def clear_iptables():
@@ -42,10 +80,7 @@ def main():
 		print("Flushing complete.")
 
 
-	print("Setting default policies to DROP")
-	os.system("iptables -P INPUT DROP")
-	os.system("iptables -P FORWARD DROP")
-	os.system("iptables -P OUTPUT DROP")
+	
 
 
 	print("Adding 2 chains: inbound, outbound")
@@ -65,9 +100,7 @@ def main():
 		os.system("iptables -A INPUT -m udp -p udp --sport {} -j ACCEPT".format(port))
 
 
-	print("Allow DHCP")
-	os.system("iptables -A INPUT -m udp -p udp --sport 67:68 --dport 67:68 -j ACCEPT")
-	os.system("iptables -A OUTPUT -m udp -p udp --sport 67:68 --dport 67:68 -j ACCEPT")
+	
 
 
 	print("Stop all traffic from port 0")
