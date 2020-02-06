@@ -14,6 +14,11 @@ def internet_host_setup():
 	os.system("ifconfig enp2s0 192.168.88.2 up")
 	os.system("route add default gw 192.168.88.1")
 
+def test_host_setup():
+	os.system("ifconfig eno1 down")
+	os.system("ifconfig enp2s0 192.168.88.3 up")
+	os.system("route add default gw 192.168.88.1")
+
 def dns_allow():
 	print("Allow DNS")
 	os.system("iptables -A INPUT -p udp  --sport 1024:65535  --dport 53 -m state --state NEW,ESTABLISHED -j ACCEPT")
@@ -41,7 +46,23 @@ def drop_all():
 	os.system("iptables -P FORWARD DROP")
 	os.system("iptables -P OUTPUT DROP")
 
+def drop_outside_to_internal():
+	print("Drop all packets with a source address from the outside matching internal network.")
+	os.system("iptables -A INPUT -i eno1 -d 192.168.88.0/24 -p all -j DROP")
 
+def drop_outside_ping():
+    print("Drop ping icmp")
+    os.system("iptables -I INPUT -p icmp --icmp-type Echo-Request -j DROP")
+    os.system("iptables -I INPUT -p icmp --icmp-type Echo-Reply -j ACCEPT")
+    os.system("iptables -I INPUT -p icmp --icmp-type destination-Unreachable -j ACCEPT")
+
+def drop_package_from_outside_to_firewall():
+    print("Drop all packets destined for the firewall host from the outside")
+    os.system("iptables -A INPUT -i eno1 -d 192.168.0. -j DROP")
+    
+def drop_SYN_to_high_port():
+    print("reject those connections that are coming the “wrong” way")
+    os.system("iptables -A INPUT -p TCP --syn --dport 1024:65535 -j REJECT")
 
 def clear_iptables():
 	os.system("iptables -F")
