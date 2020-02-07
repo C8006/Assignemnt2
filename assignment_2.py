@@ -48,7 +48,7 @@ def drop_all():
 
 def drop_outside_to_internal():
 	print("Drop all packets with a source address from the outside matching internal network.")
-	os.system("iptables -A INPUT -i eno1 -d 192.168.88.0/24 -p all -j DROP")
+	os.system("iptables -A INPUT -i eno1 -s 192.168.88.0/24 -p all -j DROP")
 
 def drop_outside_ping():
     print("Drop ping icmp")
